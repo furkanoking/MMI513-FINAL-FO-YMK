@@ -1,8 +1,64 @@
 import numpy as np
-import random
+#import random
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.ndimage import gaussian_filter
+
+
+# Linear Congruential Generator
+def lcg(seed, a=1664525, c=1013904223, m=2**32):
+    while True:
+        seed = (a * seed + c) % m
+        yield seed
+
+# Initialize LCG with a seed
+seed = 12345
+random_gen = lcg(seed)
+
+def modulosum(x, y, m):
+    # Asserting conditions for x,y and m
+    assert (x >= 0 and y >= 0)
+    assert (x <= m-1 and y <= m-1)
+    assert (type(x)==int)
+    assert (type(y)==int)
+    assert (type(m)==int)
+
+    #Checking conditions for modulo sum calculations
+    if (x <= m - 1 - y):
+        return x + y
+    else:
+        return x- (m - y)
+
+def randint_lcg(min_val, max_val):
+    global random_gen
+    return min_val + next(random_gen) % (max_val - min_val + 1)
+
+def choice_lcg(seq):
+    """Select a random element from a sequence using LCG."""
+    return seq[randint_lcg(0, len(seq) - 1)]
+# Linear Congruential Generator (LCG) function 2
+def lcg2(modulus=2**31-1, multiplier=16807, increment=0, startingval=1,upper_bound=None ):
+    # Check conditions
+    assert (modulus >= 1)
+    assert (multiplier >= 0 and increment >= 0 and startingval >= 0)
+    assert (multiplier <= modulus - 1 and increment <= modulus - 1 and startingval <= modulus - 1)
+    assert ((modulus % multiplier) <= (modulus // multiplier))
+
+    # Calculating values for LCG
+    q= modulus // multiplier
+    p= modulus % multiplier
+    r= multiplier*(startingval % q)- p *(startingval//q)
+
+    # Adjusting for negative r
+    if r<0:
+        r=r+modulus
+
+    # Getting the modulo sum
+    r= modulosum(r,increment,modulus)
+    if upper_bound is not None:
+        assert (upper_bound > 0 and upper_bound <= modulus)
+        r = r % upper_bound
+    return r
 
 def undirectedconnectiongraph(xnum=30, ynum=30):
     G = {'V':[], 'E':[]} # We will use a dictionary for simplicity
@@ -68,7 +124,8 @@ def neighbourhood(node, vertices):
 
 def randomnode(vertices):
     vertices = list(vertices)
-    randind = np.random.randint(0, len(vertices))
+    #randind = np.random.randint(0, len(vertices))
+    randind=lcg2(upper_bound=len(vertices))
     return vertices[randind]
 
 def subsetinset(query, settosearch): # Used also in Kruskal's method
@@ -89,7 +146,7 @@ def frozenunion(S1, S2):
 # For default argument
 H=undirectedconnectiongraph(30, 30)
 
-def pimmsmaze(G=H):
+def primmaze(G=H):
 
 
   #assert part idea is taken from ChatGPT
@@ -125,7 +182,8 @@ def pimmsmaze(G=H):
   while len(L)!=0:
 
     # Choose a random candidate wall
-    l=random.choice(list(L))
+    #l=random.choice(list(L))
+    l = choice_lcg(list(L))  # Use custom LCG to choose a random element
 
     # Find common elements between the candidate wall and visited cells
     common_elements=set(l).intersection(C)
@@ -162,7 +220,7 @@ plt.close()
 
 G = undirectedconnectiongraph(30, 30)
 #Testing the maze
-hop = pimmsmaze(G)
+hop = primmaze(G)
 plt.title('pimmsmaze maze')
 plotgraph(hop, False)
 
